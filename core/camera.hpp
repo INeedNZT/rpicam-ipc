@@ -20,6 +20,8 @@
 
 #include "dma_heaps.hpp"
 #include "completed_request.hpp"
+#include "stream_info.hpp"
+#include "buffer_sync.hpp"
 #include "encoder/encoder.hpp"
 
 class Camera {
@@ -31,7 +33,8 @@ public:
 	static unsigned int GetVerbosity() { return verbosity; };
 
     std::string GetCameraModel() const;
-    libcamera::Stream *GetStream(StreamInfo *info = nullptr) const;
+    libcamera::Stream *GetVideoStream(StreamInfo *info = nullptr) const;
+    StreamInfo GetStreamInfo(libcamera::Stream *stream) const;
     
     void OpenCamera();
     void CloseCamera();
@@ -42,10 +45,11 @@ public:
 
     void StartEncoder();
     void StopEncoder();
+    void EncodeBuffer(CompletedRequestPtr &completed_request);
 
     enum class MsgType
 	{
-		RequestComplete,
+        RequestComplete,
 		Timeout,
 		Quit
 	};
@@ -162,6 +166,9 @@ private:
     
     std::set<CompletedRequest *> completed_requests_;
     std::mutex completed_requests_mutex_;
+
+    std::queue<CompletedRequestPtr> encode_buffer_queue_;
+	std::mutex encode_buffer_queue_mutex_;
 
     void setupCapture();
     void makeRequests();

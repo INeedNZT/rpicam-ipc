@@ -27,7 +27,7 @@ enum class Platform
 	PISP,
 };
 
-libcamera::Stream *Camera::GetStream(StreamInfo *info) const
+libcamera::Stream *Camera::GetVideoStream(StreamInfo *info) const
 {
 	auto it = streams_.find("video");
 	if (it == streams_.end())
@@ -44,6 +44,18 @@ libcamera::Stream *Camera::GetStream(StreamInfo *info) const
 		*info = sinfo;
 	}
 	return it->second;
+}
+
+StreamInfo Camera::GetStreamInfo(libcamera::Stream *stream) const
+{
+	StreamConfiguration const &cfg = stream->configuration();
+	StreamInfo info;
+	info.width = cfg.size.width;
+	info.height = cfg.size.height;
+	info.stride = cfg.stride;
+	info.pixel_format = cfg.pixelFormat;
+	info.colour_space = cfg.colorSpace;
+	return info;
 }
 
 void Camera::OpenCamera()
@@ -227,7 +239,7 @@ void Camera::StartEncoder()
 {
 	StreamInfo info;
 	
-	GetStream(&info);
+	GetVideoStream(&info);
 	if (!info.width || !info.height || !info.stride)
 		throw std::runtime_error("video steam is not configured");
 	encoder_ = std::unique_ptr<Encoder>(Encoder::Create(info));
@@ -236,6 +248,26 @@ void Camera::StartEncoder()
 void Camera::StopEncoder()
 {
 	encoder_.reset();
+}
+
+void Camera::EncodeBuffer(CompletedRequestPtr &completed_request)
+{
+	assert(encoder_);
+	libcamera::Stream stream = GetVideoStream();
+	StreamInfo info = GetStreamInfo(stream);
+	libcamera::FrameBuffer *buffer = completed_request->buffers[stream];
+	BufferReadSync r(this, buffer);
+	libcamera::Span span = r.Get()[0];
+	void *mem = span.data();
+	if (!buffer || !mem)
+		throw std::runtime_error("no buffer to encode");
+	auto ts = completed_request->metadata.get(libcamera::controls::SensorTimestamp);
+	int64_t timestamp_ns = ts ? *ts : buffer->metadata().timestamp;
+	{
+		std::lock_guard<std::mutex> lock(encode_buffer_queue_mutex_);
+		encode_buffer_queue_.push(completed_request); // creates a new reference
+	}
+	encoder_->EncodeBuffer(buffer->planes()[0].fd.get(), span.size(), mem, info, timestamp_ns / 1000);
 }
 
 Camera::Msg Camera::Wait()
