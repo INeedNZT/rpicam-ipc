@@ -6,6 +6,7 @@
 #include <thread>
 
 #include "encoder.hpp"
+#include "core/logging.hpp"
 
 class H264Encoder : public Encoder
 {

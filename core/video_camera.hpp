@@ -24,10 +24,10 @@
 #include "buffer_sync.hpp"
 #include "encoder/encoder.hpp"
 
-class Camera {
+class VideoCamera {
 public:
-    Camera();
-    ~Camera();
+    VideoCamera();
+    ~VideoCamera();
 
     static unsigned int verbosity;
 	static unsigned int GetVerbosity() { return verbosity; };
@@ -110,6 +110,9 @@ public:
                   { return l->id() > r->id(); });
         return cameras;
     };
+
+    friend class BufferWriteSync;
+	friend class BufferReadSync;
 
 private:
     template <typename T>

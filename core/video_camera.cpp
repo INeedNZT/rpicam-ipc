@@ -1,22 +1,22 @@
-#include "camera.hpp"
+#include "video_camera.hpp"
 #include "logging.hpp"
 
 
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 
-Camera::Camera() {
+VideoCamera::VideoCamera() {
     // ...  
 }
 
-Camera::~Camera() {
+VideoCamera::~VideoCamera() {
     LOG(2, "Closing RPiCam application");
 	StopCamera();
 	// Teardown();
 	CloseCamera();
 }
 
-unsigned int Camera::verbosity = 1;
+unsigned int VideoCamera::verbosity = 1;
 
 enum class Platform
 {
@@ -27,7 +27,7 @@ enum class Platform
 	PISP,
 };
 
-libcamera::Stream *Camera::GetVideoStream(StreamInfo *info) const
+libcamera::Stream *VideoCamera::GetVideoStream(StreamInfo *info) const
 {
 	auto it = streams_.find("video");
 	if (it == streams_.end())
@@ -46,9 +46,9 @@ libcamera::Stream *Camera::GetVideoStream(StreamInfo *info) const
 	return it->second;
 }
 
-StreamInfo Camera::GetStreamInfo(libcamera::Stream *stream) const
+StreamInfo VideoCamera::GetStreamInfo(libcamera::Stream *stream) const
 {
-	StreamConfiguration const &cfg = stream->configuration();
+	libcamera::StreamConfiguration const &cfg = stream->configuration();
 	StreamInfo info;
 	info.width = cfg.size.width;
 	info.height = cfg.size.height;
@@ -58,7 +58,7 @@ StreamInfo Camera::GetStreamInfo(libcamera::Stream *stream) const
 	return info;
 }
 
-void Camera::OpenCamera()
+void VideoCamera::OpenCamera()
 {
     LOG(2, "Opening camera...");
 
@@ -105,7 +105,7 @@ void Camera::OpenCamera()
 	}
 }
 
-void Camera::CloseCamera()
+void VideoCamera::CloseCamera()
 {
     if (camera_acquired_)
     {
@@ -119,7 +119,7 @@ void Camera::CloseCamera()
     LOG(2, "Camera closed");
 }
 
-void Camera::ConfigureCamera()
+void VideoCamera::ConfigureCamera()
 {
     LOG(2, "Configuring video...");
 
@@ -145,7 +145,7 @@ void Camera::ConfigureCamera()
     LOG(2, "Video setup complete");
 }
 
-void Camera::StartCamera()
+void VideoCamera::StartCamera()
 {
     // This makes all the Request objects that we shall need.
 	makeRequests();
@@ -194,7 +194,7 @@ void Camera::StartCamera()
 	camera_started_ = true;
 	last_timestamp_ = 0;
 
-	camera_->requestCompleted.connect(this, &Camera::requestComplete);
+	camera_->requestCompleted.connect(this, &VideoCamera::requestComplete);
 
 	for (std::unique_ptr<libcamera::Request> &request : requests_)
 	{
@@ -205,7 +205,7 @@ void Camera::StartCamera()
 	LOG(2, "Camera started!");
 }
 
-void Camera::StopCamera()
+void VideoCamera::StopCamera()
 {
 	{
 		// We don't want QueueRequest to run asynchronously while we stop the camera.
@@ -220,7 +220,7 @@ void Camera::StopCamera()
 	}
 
 	if (camera_)
-		camera_->requestCompleted.disconnect(this, &Camera::requestComplete);
+		camera_->requestCompleted.disconnect(this, &VideoCamera::requestComplete);
 
 	// An application might be holding a CompletedRequest, so queueRequest will get
 	// called to delete it later, but we need to know not to try and re-queue it.
@@ -235,7 +235,7 @@ void Camera::StopCamera()
 	LOG(2, "Camera stopped!");
 }
 
-void Camera::StartEncoder()
+void VideoCamera::StartEncoder()
 {
 	StreamInfo info;
 	
@@ -245,15 +245,15 @@ void Camera::StartEncoder()
 	encoder_ = std::unique_ptr<Encoder>(Encoder::Create(info));
 }
 
-void Camera::StopEncoder()
+void VideoCamera::StopEncoder()
 {
 	encoder_.reset();
 }
 
-void Camera::EncodeBuffer(CompletedRequestPtr &completed_request)
+void VideoCamera::EncodeBuffer(CompletedRequestPtr &completed_request)
 {
 	assert(encoder_);
-	libcamera::Stream stream = GetVideoStream();
+	libcamera::Stream *stream = GetVideoStream();
 	StreamInfo info = GetStreamInfo(stream);
 	libcamera::FrameBuffer *buffer = completed_request->buffers[stream];
 	BufferReadSync r(this, buffer);
@@ -270,12 +270,12 @@ void Camera::EncodeBuffer(CompletedRequestPtr &completed_request)
 	encoder_->EncodeBuffer(buffer->planes()[0].fd.get(), span.size(), mem, info, timestamp_ns / 1000);
 }
 
-Camera::Msg Camera::Wait()
+VideoCamera::Msg VideoCamera::Wait()
 {
 	return msg_queue_.Wait();
 }
 
-void Camera::setupCapture()
+void VideoCamera::setupCapture()
 {
     // First finish setting up the configuration.
 	for (auto &config : *configuration_)
@@ -327,7 +327,7 @@ void Camera::setupCapture()
     // The requests will be made when StartCamera() is called.
 }
 
-void Camera::makeRequests()
+void VideoCamera::makeRequests()
 {
     std::map<libcamera::Stream *, std::queue<libcamera::FrameBuffer *>> free_buffers;
 
@@ -366,7 +366,7 @@ void Camera::makeRequests()
 	}
 }
 
-void Camera::requestComplete(libcamera::Request *request)
+void VideoCamera::requestComplete(libcamera::Request *request)
 {
     if (request->status() == libcamera::Request::RequestCancelled)
 	{
@@ -413,7 +413,7 @@ void Camera::requestComplete(libcamera::Request *request)
 	msg_queue_.Post(Msg(MsgType::RequestComplete, std::move(payload)));
 }
 
-void Camera::queueRequest(CompletedRequest *completed_request)
+void VideoCamera::queueRequest(CompletedRequest *completed_request)
 {
     libcamera::Request::BufferMap buffers(std::move(completed_request->buffers));
 
@@ -471,27 +471,27 @@ void Camera::queueRequest(CompletedRequest *completed_request)
         throw std::runtime_error("failed to queue request");
 }
 
-static void set_pipeline_configuration(Platform platform)
-{
-	// Respect any pre-existing value in the environment variable.
-	char const *existing_config = getenv("LIBCAMERA_RPI_CONFIG_FILE");
-	if (existing_config && existing_config[0])
-		return;
+// static void set_pipeline_configuration(Platform platform)
+// {
+// 	// Respect any pre-existing value in the environment variable.
+// 	char const *existing_config = getenv("LIBCAMERA_RPI_CONFIG_FILE");
+// 	if (existing_config && existing_config[0])
+// 		return;
 
-	// Otherwise point it at whichever of these we find first (if any) for the given platform.
-	static const std::vector<std::pair<Platform, std::string>> config_files = {
-		{ Platform::VC4, "/usr/local/share/libcamera/pipeline/rpi/vc4/rpi_apps.yaml" },
-		{ Platform::VC4, "/usr/share/libcamera/pipeline/rpi/vc4/rpi_apps.yaml" },
-	};
+// 	// Otherwise point it at whichever of these we find first (if any) for the given platform.
+// 	static const std::vector<std::pair<Platform, std::string>> config_files = {
+// 		{ Platform::VC4, "/usr/local/share/libcamera/pipeline/rpi/vc4/rpi_apps.yaml" },
+// 		{ Platform::VC4, "/usr/share/libcamera/pipeline/rpi/vc4/rpi_apps.yaml" },
+// 	};
 
-	for (auto &config_file : config_files)
-	{
-		struct stat info;
-		if (config_file.first == platform && stat(config_file.second.c_str(), &info) == 0)
-		{
-			setenv("LIBCAMERA_RPI_CONFIG_FILE", config_file.second.c_str(), 1);
-			break;
-		}
-	}
-}
+// 	for (auto &config_file : config_files)
+// 	{
+// 		struct stat info;
+// 		if (config_file.first == platform && stat(config_file.second.c_str(), &info) == 0)
+// 		{
+// 			setenv("LIBCAMERA_RPI_CONFIG_FILE", config_file.second.c_str(), 1);
+// 			break;
+// 		}
+// 	}
+// }
 

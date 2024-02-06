@@ -43,10 +43,6 @@ H264Encoder::H264Encoder(StreamInfo const &info)
 		throw std::runtime_error("failed to open V4L2 H264 encoder");
 	LOG(2, "Opened H264Encoder on " << device_name << " as fd " << fd_);
 
-	// Apply any options->
-
-	v4l2_control ctrl = {};
-
 	// Set the output and capture formats. We know exactly what they will be.
 
 	v4l2_format fmt = {};

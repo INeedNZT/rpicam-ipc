@@ -2,12 +2,12 @@
 
 #include <libcamera/framebuffer.h>
 
-class Camera;
+class VideoCamera;
 
 class BufferWriteSync
 {
 public:
-	BufferWriteSync(Camera *camera, libcamera::FrameBuffer *fb);
+	BufferWriteSync(VideoCamera *vcamera, libcamera::FrameBuffer *fb);
 	~BufferWriteSync();
 
 	const std::vector<libcamera::Span<uint8_t>> &Get() const;
@@ -20,7 +20,7 @@ private:
 class BufferReadSync
 {
 public:
-	BufferReadSync(Camera *app, libcamera::FrameBuffer *fb);
+	BufferReadSync(VideoCamera *vcamera, libcamera::FrameBuffer *fb);
 	~BufferReadSync();
 
 	const std::vector<libcamera::Span<uint8_t>> &Get() const;

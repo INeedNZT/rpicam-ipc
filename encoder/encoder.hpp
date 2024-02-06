@@ -4,7 +4,6 @@
 #include <unistd.h>
 
 #include "core/stream_info.hpp"
-#include "core/logging.hpp"
 
 typedef std::function<void(void *)> InputDoneCallback;
 typedef std::function<void(void *, size_t, int64_t, bool)> OutputReadyCallback;

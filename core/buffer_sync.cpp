@@ -3,17 +3,17 @@
 #include <sys/mman.h>
 
 #include "buffer_sync.hpp"
-#include "camera.hpp"
+#include "video_camera.hpp"
 #include "logging.hpp"
 
-BufferWriteSync::BufferWriteSync(Camera *camera, libcamera::FrameBuffer *fb)
+BufferWriteSync::BufferWriteSync(VideoCamera *vcamera, libcamera::FrameBuffer *fb)
 	: fb_(fb)
 {
 	struct dma_buf_sync dma_sync {};
 	dma_sync.flags = DMA_BUF_SYNC_START | DMA_BUF_SYNC_RW;
 
-	auto it = app->mapped_buffers_.find(fb_);
-	if (it == app->mapped_buffers_.end())
+	auto it = vcamera->mapped_buffers_.find(fb_);
+	if (it == vcamera->mapped_buffers_.end())
 	{
 		LOG_ERROR("failed to find buffer in BufferWriteSync");
 		return;
@@ -44,10 +44,10 @@ const std::vector<libcamera::Span<uint8_t>> &BufferWriteSync::Get() const
 	return planes_;
 }
 
-BufferReadSync::BufferReadSync(RPiCamApp *app, libcamera::FrameBuffer *fb)
+BufferReadSync::BufferReadSync(VideoCamera *vcamera, libcamera::FrameBuffer *fb)
 {
-	auto it = app->mapped_buffers_.find(fb);
-	if (it == app->mapped_buffers_.end())
+	auto it = vcamera->mapped_buffers_.find(fb);
+	if (it == vcamera->mapped_buffers_.end())
 	{
 		LOG_ERROR("failed to find buffer in BufferReadSync");
 		return;
