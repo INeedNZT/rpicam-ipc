@@ -20,9 +20,13 @@ public:
             event_loop();
         }
     };
-    void GetFrameBuffer(void *mem)
+    uint8_t* GetFrameBuffer(int &size)
     {
-        output_manager_.GetFrameBuffer(mem);
+        auto buffer = output_manager_.GetFrameBuffer();
+        size = buffer.size();
+        uint8_t* data = new uint8_t[size];
+        std::copy(buffer.begin(), buffer.end(), data);
+        return data;
     };
     // Stop(){
     //     vcamera_.StopCamera();
@@ -74,7 +78,7 @@ extern "C"
         vc->Start();
     }
 
-    void GetFrameBuffer(VideoCameraCtl *vc, void *mem) {
-        vc->GetFrameBuffer(mem);
+    uint8_t* GetFrameBuffer(VideoCameraCtl *vc, int &size) {
+        return vc->GetFrameBuffer(size);
     }
 }

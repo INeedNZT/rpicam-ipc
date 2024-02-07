@@ -17,7 +17,7 @@ void OutputManager::DistVideoFrame(void *mem, size_t size, int64_t timestamp_us,
     output_.get()->QueueFrame(mem, size, timestamp_us, flags);
 }
 
-void OutputManager::GetFrameBuffer(void *mem)
+std::vector<uint8_t> OutputManager::GetFrameBuffer()
 {
-    output_.get()->GetFrameBuffer(mem);
+    return output_.get()->GetFrameBuffer();
 }

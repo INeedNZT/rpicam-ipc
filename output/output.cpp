@@ -24,26 +24,25 @@ void Output::QueueFrame(void *mem, size_t size, int64_t timestamp_us, bool flags
     frame_cond_var_.notify_one();
 }
 
-void Output::GetFrameBuffer(void *mem)
+std::vector<uint8_t> Output::GetFrameBuffer()
 {
-    while (true)
+    // Get the frame buffer
+    std::unique_lock<std::mutex> lock(frame_mutex_);
+    while (frame_queue_.empty())
     {
-        // Get the frame buffer
-        std::unique_lock<std::mutex> lock(frame_mutex_);
-        while (frame_queue_.empty())
-        {
-            std::cout << "No frames available in the queue. Try again later." << std::endl;
-            // 暂时释放锁200ms
-            frame_cond_var_.wait_for(lock, std::chrono::milliseconds(200));
-        }
-        FrameBuffer frame = frame_queue_.front();
-        frame_queue_.pop();
-        // memcpy(mem, frame.mem, frame.size);
-        std::cout << "GetFrameBuffer: " << frame.mem << std::endl;
-        break;
+        std::cout << "No frames available in the queue. Try again later." << std::endl;
+        // 暂时释放锁200ms
+        frame_cond_var_.wait_for(lock, std::chrono::milliseconds(200));
     }
-}
+    FrameBuffer frame = frame_queue_.front();
+    frame_queue_.pop();
+    const void *m = frame.mem;
+    std::cout << frame.size << std::endl;
+    std::vector<uint8_t> buf_(frame.size);
+    memcpy(&buf_[0], m, frame.size);
 
+    return buf_;
+}
 
 void Output::outputBuffer(FrameBuffer &frame)
 {
