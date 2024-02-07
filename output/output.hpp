@@ -8,6 +8,7 @@
 #include <queue>
 #include <thread>
 #include <mutex>
+#include <condition_variable>
 
 #include "core/logging.hpp"
 
@@ -18,7 +19,7 @@ public:
 	Output();
 	virtual ~Output();
 	
-	virtual void QueueFrame(void *mem, size_t size, int64_t timestamp_us, uint32_t flags);
+	virtual void QueueFrame(void *mem, size_t size, int64_t timestamp_us, bool flags);
 	virtual void GetFrameBuffer(void *mem);
 
 protected:
@@ -32,6 +33,7 @@ protected:
 
 private:
 	std::mutex frame_mutex_;
+	std::condition_variable frame_cond_var_;
 	std::queue<FrameBuffer> frame_queue_;
 	virtual void outputBuffer(FrameBuffer &frame);
 };

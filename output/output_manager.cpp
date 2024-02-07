@@ -11,7 +11,7 @@ OutputManager::~OutputManager()
         output_.reset();
 } 
 
-void OutputManager::DistVideoFrame(void *mem, size_t size, int64_t timestamp_us, uint32_t flags)
+void OutputManager::DistVideoFrame(void *mem, size_t size, int64_t timestamp_us, bool flags)
 {
     // Distribute the video frame to the output
     output_.get()->QueueFrame(mem, size, timestamp_us, flags);

@@ -24,6 +24,8 @@
 #include "buffer_sync.hpp"
 #include "encoder/encoder.hpp"
 
+typedef std::function<void(void *, size_t, int64_t, bool)> EncodeOutputReadyCallback;
+
 class VideoCamera {
 public:
     VideoCamera();
@@ -38,7 +40,7 @@ public:
     
     void OpenCamera();
     void CloseCamera();
-    void ConfigureCamera();
+    void ConfigureVideo();
 
     void StartCamera();
     void StopCamera();
@@ -46,6 +48,7 @@ public:
     void StartEncoder();
     void StopEncoder();
     void EncodeBuffer(CompletedRequestPtr &completed_request);
+    void SetEncodeOutputReadyCallback(EncodeOutputReadyCallback callback);
 
     enum class MsgType
 	{

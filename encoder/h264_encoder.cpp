@@ -61,6 +61,8 @@ H264Encoder::H264Encoder(StreamInfo const &info)
 
 	fmt = {};
 	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+	fmt.fmt.pix_mp.width = 1920;
+	fmt.fmt.pix_mp.height = 1080;
 	fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_H264;
 	fmt.fmt.pix_mp.field = V4L2_FIELD_ANY;
 	fmt.fmt.pix_mp.colorspace = V4L2_COLORSPACE_DEFAULT;
@@ -70,6 +72,14 @@ H264Encoder::H264Encoder(StreamInfo const &info)
 	if (xioctl(fd_, VIDIOC_S_FMT, &fmt) < 0)
 		throw std::runtime_error("failed to set capture format");
 
+	double frate = 30.0;
+	struct v4l2_streamparm parm = {};
+	parm.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+	parm.parm.output.timeperframe.numerator = 90000.0 / frate;
+	parm.parm.output.timeperframe.denominator = 90000;
+	if (xioctl(fd_, VIDIOC_S_PARM, &parm) < 0)
+		throw std::runtime_error("failed to set streamparm");
+	
 	// Request that the necessary buffers are allocated. The output queue
 	// (input to the encoder) shares buffers from our caller, these must be
 	// DMABUFs. Buffers for the encoded bitstream must be allocated and
