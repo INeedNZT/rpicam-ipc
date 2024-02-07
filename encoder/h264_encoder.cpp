@@ -43,6 +43,19 @@ H264Encoder::H264Encoder(StreamInfo const &info)
 		throw std::runtime_error("failed to open V4L2 H264 encoder");
 	LOG(2, "Opened H264Encoder on " << device_name << " as fd " << fd_);
 
+	// Set the profile -> baseline
+	v4l2_control ctrl = {};
+	ctrl.id = V4L2_CID_MPEG_VIDEO_H264_PROFILE;
+	ctrl.value = V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE;
+	if (xioctl(fd_, VIDIOC_S_CTRL, &ctrl) < 0)
+		throw std::runtime_error("failed to set profile");
+
+	// Set inline headers -> forces the stream header included in every I frame
+	ctrl.id = V4L2_CID_MPEG_VIDEO_REPEAT_SEQ_HEADER;
+	ctrl.value = 1;
+	if (xioctl(fd_, VIDIOC_S_CTRL, &ctrl) < 0)
+		throw std::runtime_error("failed to set inline headers");
+
 	// Set the output and capture formats. We know exactly what they will be.
 
 	v4l2_format fmt = {};
