@@ -40,6 +40,7 @@ void Output::GetFrameBuffer(void *mem)
         frame_queue_.pop();
         // memcpy(mem, frame.mem, frame.size);
         std::cout << "GetFrameBuffer: " << frame.mem << std::endl;
+        break;
     }
 }
 

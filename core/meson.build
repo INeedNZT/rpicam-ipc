@@ -7,4 +7,5 @@ rpicam_ipc_src += files([
     'buffer_sync.cpp',
     'dma_heaps.cpp',
     'video_camera.cpp',
+    'video_camera_ctl.cpp',
 ])
