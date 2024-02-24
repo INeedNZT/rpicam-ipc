@@ -26,18 +26,16 @@ void Output::QueueFrame(void *mem, size_t size, int64_t timestamp_us, bool flags
 
 std::vector<uint8_t> Output::GetFrameBuffer()
 {
-    // Get the frame buffer
+    using namespace std::chrono_literals;
     std::unique_lock<std::mutex> lock(frame_mutex_);
     while (frame_queue_.empty())
     {
         std::cout << "No frames available in the queue. Try again later." << std::endl;
-        // 暂时释放锁200ms
-        frame_cond_var_.wait_for(lock, std::chrono::milliseconds(200));
+        frame_cond_var_.wait_for(lock, 200ms);
     }
     FrameBuffer frame = frame_queue_.front();
     frame_queue_.pop();
     const void *m = frame.mem;
-    std::cout << frame.size << std::endl;
     std::vector<uint8_t> buf_(frame.size);
     memcpy(&buf_[0], m, frame.size);
 
