@@ -35,5 +35,6 @@ private:
 	std::mutex frame_mutex_;
 	std::condition_variable frame_cond_var_;
 	std::queue<FrameBuffer> frame_queue_;
+	bool state_ = false;
 	virtual void outputBuffer(FrameBuffer &frame);
 };

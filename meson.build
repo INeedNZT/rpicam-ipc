@@ -26,7 +26,6 @@ libcamera_dep = dependency('libcamera', required : true)
 rpicam_ipc_src = []
 rpicam_ipc_dep = [libcamera_dep]
 
-subdir('controller')
 subdir('core')
 subdir('encoder')
 subdir('output')

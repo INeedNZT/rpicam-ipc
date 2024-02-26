@@ -35,9 +35,23 @@ std::vector<uint8_t> Output::GetFrameBuffer()
     }
     FrameBuffer frame = frame_queue_.front();
     frame_queue_.pop();
-    const void *m = frame.mem;
+    bool keyframe = frame.flags;
+    // 等待关键帧
+    while (state_ == false)
+    {
+        if (keyframe)
+            state_ = true;
+        else
+        {
+            frame = frame_queue_.front();
+            frame_queue_.pop();
+            keyframe = frame.flags;
+            continue;
+        }
+    }
+    
     std::vector<uint8_t> buf_(frame.size);
-    memcpy(&buf_[0], m, frame.size);
+    memcpy(&buf_[0], frame.mem, frame.size);
 
     return buf_;
 }
