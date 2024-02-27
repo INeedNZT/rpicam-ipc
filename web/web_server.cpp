@@ -103,9 +103,9 @@ int main(void)
   mg_mgr_init(&mgr); // Initialise event manager
   printf("Starting WS listener on %s/websocket\n", s_listen_on);
   mg_http_listen(&mgr, s_listen_on, fn, NULL); // Create HTTP listener
-  mg_timer_add(&mgr, 25, MG_TIMER_REPEAT, sendDataThread, &mgr);
+  mg_timer_add(&mgr, 10, MG_TIMER_REPEAT, sendDataThread, &mgr);
   for (;;)
-    mg_mgr_poll(&mgr, 20); // Infinite event loop
+    mg_mgr_poll(&mgr, 5); // Infinite event loop
   mg_mgr_free(&mgr);
   return 0;
 }
