@@ -7,6 +7,12 @@
 #include "controller/video_camera_ctl.hpp"
 #include <string>
 
+struct msg
+{
+  void *ptr;
+  int size;
+};
+
 static const char *s_listen_on = "ws://localhost:8000";
 static const char *s_web_root = ".";
 
@@ -14,23 +20,27 @@ struct mg_mgr mgr;
 
 std::string json = R"({"action": "init", "width": 1920, "height": 1080})";
 
-VideoCameraCtl vc;
-
-// 一个vector用来存储所有的连接的id
-std::vector<unsigned long> connections;
-
-static void sendDataThread(void *arg)
+static void getCameraWork()
 {
-  // 将vc转换为VideoCameraCtl类型
-  printf("sendDataThread\n");
-  struct mg_connection *c;
-  for (c = mgr.conns; c != NULL; c = c->next)
+  VideoCameraCtl vc;
+  // make camera work first
+  std::thread t2(&VideoCameraCtl::Start, &vc);
+  mg_wakeup_init(&mgr);
+  printf("Start Working...\n");
+  while (true)
   {
-    if (c->data[0] != 'W')
-      continue;
-    int size;
-    const void *buffer_ptr = vc.GetFrameBuffer(size);
-    mg_ws_send(c, buffer_ptr, size, WEBSOCKET_OP_BINARY);
+    struct mg_connection *c;
+    for (c = mgr.conns; c != NULL; c = c->next)
+    {
+      if (c->data[0] != 'W')
+        continue;
+      int size;
+      uint8_t *buffer_ptr = vc.GetFrameBuffer(size);
+      struct msg *m = new msg;
+      m->ptr = buffer_ptr;
+      m->size = size;
+      mg_wakeup(&mgr, c->id, &m, sizeof(m));
+    }
   }
 }
 
@@ -52,7 +62,7 @@ static void fn(struct mg_connection *c, int ev, void *ev_data)
       // Upgrade to websocket. From now on, a connection is a full-duplex
       // Websocket connection, which will receive MG_EV_WS_MSG events.
       mg_ws_upgrade(c, hm, NULL);
-      c->data[0] = 'W'; 
+      c->data[0] = 'W';
     }
     else if (mg_http_match_uri(hm, "/rest"))
     {
@@ -62,8 +72,8 @@ static void fn(struct mg_connection *c, int ev, void *ev_data)
     else
     {
       // Serve static files
-      static struct mg_http_serve_opts opts; // 默认初始化
-      opts.root_dir = s_web_root;            // 单独设置需要的成员变量
+      static struct mg_http_serve_opts opts;
+      opts.root_dir = s_web_root;
       mg_http_serve_dir(c, hm, &opts);
     }
   }
@@ -88,22 +98,27 @@ static void fn(struct mg_connection *c, int ev, void *ev_data)
   {
     printf("WS connection opened\n");
     mg_ws_send(c, json.c_str(), json.length(), WEBSOCKET_OP_TEXT);
-    connections.push_back(c->id);
   }
   else if (ev == MG_EV_CLOSE)
   {
     printf("WS connection closed\n");
   }
+  else if (ev == MG_EV_WAKEUP)
+  {
+    struct mg_str *data = (struct mg_str *)ev_data;
+    struct msg *m = *(struct msg **)data->ptr;
+    mg_ws_send(c, m->ptr, m->size, WEBSOCKET_OP_BINARY);
+    free(m->ptr);
+    free(m);
+  }
 }
 
 int main(void)
 {
-  // Start camera first
-  std::thread t1(&VideoCameraCtl::Start, &vc);
   mg_mgr_init(&mgr); // Initialise event manager
   printf("Starting WS listener on %s/websocket\n", s_listen_on);
+  std::thread t2(getCameraWork);
   mg_http_listen(&mgr, s_listen_on, fn, NULL); // Create HTTP listener
-  mg_timer_add(&mgr, 10, MG_TIMER_REPEAT, sendDataThread, &mgr);
   for (;;)
     mg_mgr_poll(&mgr, 5); // Infinite event loop
   mg_mgr_free(&mgr);
