@@ -20,7 +20,7 @@ void Output::QueueFrame(void *mem, size_t size, int64_t timestamp_us, bool flags
     // Queue the frame for output
     std::lock_guard<std::mutex> lock(frame_mutex_);
     frame_queue_.push({mem, size, timestamp_us, flags});
-    std::cout << "QueueFrame: " << frame_queue_.size() << std::endl;
+    // std::cout << "QueueFrame: " << frame_queue_.size() << std::endl;
     frame_cond_var_.notify_one();
 }
 

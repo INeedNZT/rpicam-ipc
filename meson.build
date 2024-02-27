@@ -9,6 +9,7 @@ project('rpicam-ipc', 'c', 'cpp',
             'buildtype=debug',
         ])
 
+c_arguments = ['-D_GNU_SOURCE']
 cpp_arguments = ['-pedantic', '-Wno-unused-parameter', '-faligned-new']
 
 # Needed for file sizes > 32-bits.
@@ -26,17 +27,19 @@ libcamera_dep = dependency('libcamera', required : true)
 rpicam_ipc_src = []
 rpicam_ipc_dep = [libcamera_dep]
 
+subdir('controller')
 subdir('core')
 subdir('encoder')
 subdir('output')
 
 add_project_arguments(cpp_arguments, language : 'cpp')
-
+add_project_arguments(c_arguments, language : 'c')
 
 rpicam_ipc = library(
     'rpicam_ipc',
     rpicam_ipc_src,
     include_directories : include_directories('.'),
-    name_prefix : '',
     dependencies : rpicam_ipc_dep,
 )
+
+subdir('web')

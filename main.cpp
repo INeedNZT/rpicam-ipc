@@ -22,7 +22,7 @@ void getFrameBuffer(VideoCameraCtl *vc)
 
 int main(int argc, char *argv[])
 {
-	VideoCameraCtl *vc = Create();
+	VideoCameraCtl vc;
 	std::thread t1(getFrameBuffer, vc);
 	Start(vc);
 	return 0;
