@@ -5,6 +5,7 @@
 typedef mg_mgr MongooseManager;
 typedef mg_connection MongooseConnection;
 
+// Wrapper for transfer fb_ptr in mongoose
 struct FrameBufferPtrWrapper
 {
     FrameBufferPtr fb_ptr;

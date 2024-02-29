@@ -16,6 +16,7 @@ int main(int argc, char *argv[])
 		{
 			if (c->data[0] != 'W')
 				continue;
+			// Dynamically allocate the wrapper to controlle the life time of the shared ptr (fb_ptr)
 			auto* fb_ptr_wrapper = new FrameBufferPtrWrapper { fb_ptr };
 			mg_wakeup(&mgr, c->id, &fb_ptr_wrapper, sizeof(*fb_ptr_wrapper));
 		} });
