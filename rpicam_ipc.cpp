@@ -16,8 +16,8 @@ int main(int argc, char *argv[])
 		{
 			if (c->data[0] != 'W')
 				continue;
-			auto* fb_ptr_wrapper = new FrameBufferPtrWrapper { &fb_ptr };
-			mg_wakeup(&mgr, c->id, fb_ptr_wrapper, sizeof(*fb_ptr_wrapper));
+			auto* fb_ptr_wrapper = new FrameBufferPtrWrapper { fb_ptr };
+			mg_wakeup(&mgr, c->id, &fb_ptr_wrapper, sizeof(*fb_ptr_wrapper));
 		} });
 
 	std::thread video_camera_thread(std::bind(&VideoCameraCtl::StartCamera, &vc));

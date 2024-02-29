@@ -7,7 +7,7 @@ typedef mg_connection MongooseConnection;
 
 struct FrameBufferPtrWrapper
 {
-    FrameBufferPtr* fb_ptr;
+    FrameBufferPtr fb_ptr;
 };
 
 class WebU

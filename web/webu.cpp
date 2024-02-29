@@ -52,13 +52,12 @@ void WebU::DefaultHandler(MongooseConnection *conn, int ev, void *ev_data)
     {
         struct mg_str *data = (struct mg_str *)ev_data;
         FrameBufferPtrWrapper* fb_ptr_wrapper = *(FrameBufferPtrWrapper **)data->ptr;
-        FrameBufferPtr* fb_ptr = fb_ptr_wrapper->fb_ptr;
-        mg_ws_send(conn, fb_ptr->get()->mem, fb_ptr->get()->size, WEBSOCKET_OP_BINARY);
+        FrameBufferPtr fb_ptr = fb_ptr_wrapper->fb_ptr;
+        mg_ws_send(conn, fb_ptr.get()->mem, fb_ptr.get()->size, WEBSOCKET_OP_BINARY);
         // After sending frame buffer, delete the wrapper, the share ptr
         // will automatically delete the frame buffer as well when it's
         // no longer in use
-        // FIXME: This is a memory leak, the wrapper should be deleted
-        // delete fb_ptr_wrapper;
-        // fb_ptr_wrapper = nullptr;
+        delete fb_ptr_wrapper;
+        fb_ptr_wrapper = nullptr;
     }
 }
