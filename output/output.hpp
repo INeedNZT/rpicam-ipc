@@ -1,40 +1,26 @@
-#pragma once
-
-#include <atomic>
-#include <cstdio>
-#include <streambuf>
-#include <fstream>
-#include <libcamera/control_ids.h>
 #include <queue>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-
+#include <memory>
+#include "core/frame_buffer.hpp"
 #include "core/logging.hpp"
 
+using OutputCallback = std::function<void(FrameBufferPtr &)>;
 
 class Output
 {
 public:
 	Output();
 	virtual ~Output();
-	
-	virtual void QueueFrame(void *mem, size_t size, int64_t timestamp_us, bool flags);
-	virtual std::vector<uint8_t> GetFrameBuffer();
-
-protected:
-	struct FrameBuffer
-	{
-		void *mem;
-		size_t size;
-		int64_t timestamp_us;
-		uint32_t flags;
-	};
+	virtual void QueueFrame(FrameBufferPtr fb_ptr);
+	virtual void SetCallback(OutputCallback callback);
+	virtual void StartOutputThread();
 
 private:
 	std::mutex frame_mutex_;
 	std::condition_variable frame_cond_var_;
-	std::queue<FrameBuffer> frame_queue_;
-	bool state_ = false;
-	virtual void outputBuffer(FrameBuffer &frame);
+	std::queue<FrameBufferPtr> frame_queue_;
+	virtual void outputThread();
+	OutputCallback callback_;
 };

@@ -1,10 +1,7 @@
-web_server = executable(
-    'web_server',
-    ['web_server.cpp', 'mongoose.c'],
-    dependencies: [libcamera_dep],
-    include_directories : include_directories('..'),
-    link_with : rpicam_ipc,
-)
+rpicam_ipc_web += files([
+    'webu.cpp',
+    'mongoose.c'
+])
 
 fs = import('fs')
 

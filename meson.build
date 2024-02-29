@@ -22,24 +22,42 @@ if cxx.get_id() == 'gcc'
     cpp_arguments += '-Wno-psabi'
 endif
 
+add_project_arguments(cpp_arguments, language : 'cpp')
+add_project_arguments(c_arguments, language : 'c')
+
 libcamera_dep = dependency('libcamera', required : true)
 
+
+rpicam_ipc_web = []
 rpicam_ipc_src = []
 rpicam_ipc_dep = [libcamera_dep]
+
+subdir('web')
+
+web = library(
+    'web', 
+    rpicam_ipc_web,
+    include_directories : include_directories('.')
+)
 
 subdir('controller')
 subdir('core')
 subdir('encoder')
 subdir('output')
 
-add_project_arguments(cpp_arguments, language : 'cpp')
-add_project_arguments(c_arguments, language : 'c')
-
 rpicam_ipc = library(
     'rpicam_ipc',
     rpicam_ipc_src,
     include_directories : include_directories('.'),
     dependencies : rpicam_ipc_dep,
+    link_with : web
 )
 
-subdir('web')
+executable(
+    'rpicam-ipc', 
+    files('rpicam_ipc.cpp'),
+    include_directories : include_directories('.'),
+    dependencies : rpicam_ipc_dep,
+    link_with : [rpicam_ipc, web]
+)
+

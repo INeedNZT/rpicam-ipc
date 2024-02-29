@@ -7,16 +7,20 @@ OutputManager::OutputManager()
 
 OutputManager::~OutputManager()
 {
-    if (output_)
-        output_.reset();
-} 
+}
 
 void OutputManager::DistVideoFrame(void *mem, size_t size, int64_t timestamp_us, bool keyframe)
 {
-    output_.get()->QueueFrame(mem, size, timestamp_us, keyframe);
+    FrameBufferPtr fb_ptr = std::make_shared<FrameBuffer>(mem, size, timestamp_us, keyframe);
+    output_.get()->QueueFrame(fb_ptr);
 }
 
-std::vector<uint8_t> OutputManager::GetFrameBuffer()
+void OutputManager::SetPreviewCallback(OutputCallback callback)
 {
-    return output_.get()->GetFrameBuffer();
+    output_.get()->SetCallback(callback);
+}
+
+void OutputManager::StartPreviewThread()
+{
+    output_.get()->StartOutputThread();
 }

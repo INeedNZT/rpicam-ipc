@@ -14,15 +14,18 @@ public:
     ~OutputManager();
 
     void DistVideoFrame(void *mem, size_t size, int64_t timestamp_us, bool flags);
-    std::vector<uint8_t> GetFrameBuffer();
+    void SetPreviewCallback(OutputCallback callback);
+    // void SetRemoteCallback();
+    // void SetFileCallback();
+    void StartPreviewThread();
 
 private:
     std::unique_ptr<Output> output_;
-    enum State
-	{
-		DISABLED = 0,
-		WAITING_KEYFRAME = 1,
-		RUNNING = 2
-	};
-    State state_ = WAITING_KEYFRAME;
+    // enum State
+	// {
+	// 	DISABLED = 0,
+	// 	WAITING_KEYFRAME = 1,
+	// 	RUNNING = 2
+	// };
+    // State state_ = WAITING_KEYFRAME;
 };
