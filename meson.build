@@ -44,6 +44,7 @@ subdir('controller')
 subdir('core')
 subdir('encoder')
 subdir('output')
+subdir('text')
 
 rpicam_ipc = library(
     'rpicam_ipc',
