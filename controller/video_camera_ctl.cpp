@@ -38,6 +38,20 @@ void VideoCameraCtl::StartCamera()
                 throw std::runtime_error("unrecognised message!");
 
             CompletedRequestPtr &completed_request = std::get<CompletedRequestPtr>(msg.payload);
+            // Add timestamp to the frame before encoding
+            
+            auto ts = completed_request.get()->metadata.get(libcamera::controls::SensorTimestamp).value();
+            char format[] = "%Y-%m-%d %H:%M:%S";
+            Timestamp timestamp(format);
+            timestamp.SetFontPath(std::string("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf").c_str());
+            timestamp.SetTimestamp(ts);
+            // timestamp.SetPosition(10, 10);
+            libcamera::Stream *stream = vcamera_.GetVideoStream();
+            libcamera::FrameBuffer *buffer = completed_request->buffers[stream];
+            BufferWriteSync r(&vcamera_, buffer);
+            libcamera::Span span = r.Get()[0];
+            void *mem = span.data();
+            timestamp.Draw2Canvas(reinterpret_cast<uint8_t*>(mem), 1920, 1080);
             vcamera_.EncodeBuffer(completed_request);
         }
     }

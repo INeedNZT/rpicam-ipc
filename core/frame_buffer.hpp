@@ -2,8 +2,8 @@
 
 #include <memory>
 #include <cstdlib>
-#include <string.h>
 #include <iostream>
+#include <cstring>
 
 struct FrameBuffer
 {

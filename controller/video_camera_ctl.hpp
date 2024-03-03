@@ -1,5 +1,6 @@
 #include "core/video_camera.hpp"
 #include "output/output_manager.hpp"
+#include "text/timestamp.hpp"
 
 class VideoCameraCtl
 {
