@@ -14,7 +14,13 @@ public:
     void StartPreview();
     void StopPreview();
 
+    void EnableTimestamp(bool enable);
+
 private:
     OutputManager& output_manager_;
     VideoCamera vcamera_;
+    Timestamp timestamp_;
+    bool enable_timestamp_;
+    int64_t prev_timestamp_sec_;
+    void addTimestampText(CompletedRequestPtr& completed_request);
 };

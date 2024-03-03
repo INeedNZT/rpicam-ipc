@@ -3,9 +3,8 @@
 #include <ctime>
 #include <chrono>
 #include <sstream>
-#include <iomanip>
 
-Timestamp::Timestamp(char *format)
+Timestamp::Timestamp(const char *format)
 {
     this->format = new char[strlen(format) + 1];
     strcpy(this->format, format);
@@ -17,15 +16,16 @@ Timestamp::~Timestamp()
         delete[] format;
 }
 
-void Timestamp::SetTimestamp(int64_t timestamp_us)
+void Timestamp::SetTimestamp(int64_t timestamp_sec)
 {
-    char buffer[20];
-    auto now = std::chrono::system_clock::now();
-    std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
-
-    std::tm now_tm = {};
-    localtime_r(&now_time_t, &now_tm);
-
-    std::strftime(buffer, 20, "%Y-%m-%d %H:%M:%S", &now_tm);
+    using namespace std::chrono;
+    
+    time_point<system_clock, seconds> tp{seconds{timestamp_sec}};
+    std::time_t t = system_clock::to_time_t(tp);
+    std::tm now_tm = *std::localtime(&t);
+    
+    char buffer[128];
+    std::strftime(buffer, sizeof(buffer), format, &now_tm);
+    
     SetText(buffer);
 }

@@ -1,8 +1,12 @@
 #include "video_camera_ctl.hpp"
 
-VideoCameraCtl::VideoCameraCtl(OutputManager& output_manager) : output_manager_(output_manager), vcamera_()
+VideoCameraCtl::VideoCameraCtl(OutputManager &output_manager) : output_manager_(output_manager), vcamera_(), timestamp_("%Y-%m-%d %H:%M:%S")
 {
     std::cout << "VideoCameraCtl constructor" << std::endl;
+    timestamp_.SetFontPath("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf");
+    timestamp_.SetFontSize(24);
+    // timestamp.SetPosition(10, 10);
+    enable_timestamp_ = true;
 }
 
 VideoCameraCtl::~VideoCameraCtl()
@@ -38,20 +42,14 @@ void VideoCameraCtl::StartCamera()
                 throw std::runtime_error("unrecognised message!");
 
             CompletedRequestPtr &completed_request = std::get<CompletedRequestPtr>(msg.payload);
-            // Add timestamp to the frame before encoding
-            
-            auto ts = completed_request.get()->metadata.get(libcamera::controls::SensorTimestamp).value();
-            char format[] = "%Y-%m-%d %H:%M:%S";
-            Timestamp timestamp(format);
-            timestamp.SetFontPath(std::string("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf").c_str());
-            timestamp.SetTimestamp(ts);
-            // timestamp.SetPosition(10, 10);
-            libcamera::Stream *stream = vcamera_.GetVideoStream();
-            libcamera::FrameBuffer *buffer = completed_request->buffers[stream];
-            BufferWriteSync r(&vcamera_, buffer);
-            libcamera::Span span = r.Get()[0];
-            void *mem = span.data();
-            timestamp.Draw2Canvas(reinterpret_cast<uint8_t*>(mem), 1920, 1080);
+
+            if (enable_timestamp_)
+            {
+                addTimestampText(completed_request);
+            }
+            auto framerate = completed_request->framerate;
+            std::cout << "framerate: " << framerate << std::endl;
+
             vcamera_.EncodeBuffer(completed_request);
         }
     }
@@ -74,4 +72,30 @@ void VideoCameraCtl::StartPreview()
 void VideoCameraCtl::StopPreview()
 {
     // output_manager_.StopPreviewThread();
+}
+
+void VideoCameraCtl::EnableTimestamp(bool enable)
+{
+    enable_timestamp_ = enable;
+}
+
+void VideoCameraCtl::addTimestampText(CompletedRequestPtr &completed_request)
+{
+    // Get current time in seconds
+    auto now = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch());
+    int64_t timestamp_sec = duration.count();
+    if (timestamp_sec != prev_timestamp_sec_)
+    {
+        timestamp_.SetTimestamp(timestamp_sec);
+        prev_timestamp_sec_ = timestamp_sec;
+    }
+
+    // Add timestamp to the frame before encoding
+    libcamera::Stream *stream = vcamera_.GetVideoStream();
+    libcamera::FrameBuffer *buffer = completed_request->buffers[stream];
+    BufferWriteSync r(&vcamera_, buffer);
+    libcamera::Span span = r.Get()[0];
+    void *mem = span.data();
+    timestamp_.Draw2Canvas(reinterpret_cast<uint8_t *>(mem), 1920, 1080);
 }

@@ -10,28 +10,34 @@ public:
     Text();
     ~Text();
     void SetFontPath(const char *fontPath);
+    void SetFontSize(int fontSize);
     void SetText(const char *text);
     void SetPosition(int x, int y);
     void Draw2Canvas(uint8_t *YPlane, unsigned int width, unsigned int height);
-    struct TextData
+    struct Bitmap
     {
         unsigned int width;
         unsigned int rows;
         int pitch;
         signed long advanceX;
-        signed long advanceY;
         uint8_t *bitmap;
     };
+    struct TextData
+    {
+        Bitmap bitmap;
+        signed long posX;
+    };
 
-    TextData *bitmap;
+    TextData *textData;
 
 protected:
-    // Static is used because the variations in characters are usually small, 
+    // "static" is used because the variations in characters are usually small,
     // and utilizing caching can reduce the overhead of rendering.
-    static std::map<char, TextData> cachedBitmaps;
+    static std::map<char, Bitmap> cachedBitmaps;
 
 private:
     char *fontPath;
+    int fontSize;
     char *text;
     int x;
     int y;
