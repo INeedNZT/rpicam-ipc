@@ -12,15 +12,11 @@ struct FrameBuffer
     {
         this->mem = malloc(size);
         memcpy(this->mem, mem, size);
-        // 打印mem
-        std::cout << "frame buffer中的mem: " << this->mem << std::endl;
     }
     ~FrameBuffer()
     {
-        std::cout << "进入析构函数\n" << std::endl;
         if (this->mem)
         {
-            std::cout << "frame buffer中的mem被释放了\n" << std::endl;
             free(this->mem);
         }
     }
