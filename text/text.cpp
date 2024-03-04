@@ -12,11 +12,11 @@ std::map<char, Text::Bitmap> Text::cachedBitmaps = {};
 
 Text::Text()
 {
-    fontPath = nullptr;
-    fontSize = 0;
-    text = nullptr;
-    offsetX = 0;
-    offsetX = 0;
+    this->fontPath = nullptr;
+    this->fontSize = 0;
+    this->text = nullptr;
+    this->offsetX = 0;
+    this->offsetX = 0;
     textBitmap = nullptr;
 
     if (FT_Init_FreeType(&library))
@@ -28,21 +28,21 @@ Text::Text()
 
 Text::~Text()
 {
-    if (fontPath)
-        delete[] fontPath;
-    if (text)
-        delete[] text;
-    if (textBitmap)
+    if (this->fontPath)
+        delete[] this->fontPath;
+    if (this->text)
+        delete[] this->text;
+    if (this->textBitmap)
     {
-        delete[] textBitmap->mem;
-        delete textBitmap;
+        delete[] this->textBitmap->mem;
+        delete this->textBitmap;
     }
 
-    for (auto &pair : cachedBitmaps)
+    for (auto &pair : this->cachedBitmaps)
     {
         delete[] pair.second.mem;
     }
-    cachedBitmaps.clear();
+    this->cachedBitmaps.clear();
 
     FT_Done_Face(face);
     FT_Done_FreeType(library);
@@ -111,8 +111,8 @@ void Text::renderBitmap()
             std::cout << "load char faild" << std::endl;
 
         maxAscender = std::max(maxAscender, face->glyph->bitmap_top);
-        int descender = face->glyph->bitmap.rows - face->glyph->bitmap_top;
-        maxDescender = std::max(maxDescender, std::abs(descender));
+        maxDescender = std::max(maxDescender, std::abs(static_cast<int>(face->glyph->bitmap.rows - face->glyph->bitmap_top)));
+
         int bufferSize = face->glyph->bitmap.pitch * face->glyph->bitmap.rows;
         buffer = new uint8_t[bufferSize];
         memcpy(buffer, face->glyph->bitmap.buffer, bufferSize);
@@ -142,7 +142,7 @@ void Text::renderBitmap()
         {
             const Text::TextData &td = textArray[j];
             // maxAscender is our baseline, and "firstRow" means
-            // which row in the combined bitmap is the first row of the character
+            // which row in the combined bitmap is the start of the current character
             size_t firstRow = maxAscender - td.bitmap.top;
             size_t lastRow = firstRow + td.bitmap.rows;
             if (firstRow > i || i >= lastRow)
@@ -153,22 +153,22 @@ void Text::renderBitmap()
         }
     }
 
-    if (textBitmap)
+    if (this->textBitmap)
     {
-        delete[] textBitmap->mem;
-        delete textBitmap;
+        delete[] this->textBitmap->mem;
+        delete this->textBitmap;
     }
 
-    textBitmap = new Bitmap{static_cast<unsigned int>(penX), maxHeight, static_cast<int>(penX), 0, 0, 0, bitmap};
+    this->textBitmap = new Bitmap{static_cast<unsigned int>(penX), maxHeight, penX, 0, maxAscender, penX, bitmap};
 }
 
 void Text::Draw2Canvas(uint8_t *YPlane, unsigned int width, unsigned int height)
 {
     renderBitmap();
 
-    unsigned int textWidth = textBitmap->width;
-    unsigned int textHeight = textBitmap->rows;
-    uint8_t *mem = textBitmap->mem;
+    unsigned int textWidth = this->textBitmap->width;
+    unsigned int textHeight = this->textBitmap->rows;
+    uint8_t *mem = this->textBitmap->mem;
 
     uint8_t threshold = 128;
 
