@@ -6,9 +6,8 @@ class Timestamp : public Text
 public:
     Timestamp(const char *format);
     ~Timestamp();
-    void SetTimestamp(int64_t timestamp_us);
+    void SetTimestamp(int64_t timestamp_sec);
     
 private:
-    int64_t timestamp_us;
     char *format;
 };

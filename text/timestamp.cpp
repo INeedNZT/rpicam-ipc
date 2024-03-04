@@ -12,8 +12,8 @@ Timestamp::Timestamp(const char *format)
 
 Timestamp::~Timestamp()
 {
-    if (format)
-        delete[] format;
+    if (this->format)
+        delete[] this->format;
 }
 
 void Timestamp::SetTimestamp(int64_t timestamp_sec)
@@ -25,7 +25,7 @@ void Timestamp::SetTimestamp(int64_t timestamp_sec)
     std::tm now_tm = *std::localtime(&t);
     
     char buffer[128];
-    std::strftime(buffer, sizeof(buffer), format, &now_tm);
+    std::strftime(buffer, sizeof(buffer), this->format, &now_tm);
     
     SetText(buffer);
 }
