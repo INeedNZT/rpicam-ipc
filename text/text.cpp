@@ -17,6 +17,7 @@ Text::Text()
     text = nullptr;
     offsetX = 0;
     offsetX = 0;
+    textBitmap = nullptr;
 
     if (FT_Init_FreeType(&library))
     {
@@ -31,10 +32,10 @@ Text::~Text()
         delete[] fontPath;
     if (text)
         delete[] text;
-    if (textData)
+    if (textBitmap)
     {
-        delete[] textData->bitmap.mem;
-        delete textData;
+        delete[] textBitmap->mem;
+        delete textBitmap;
     }
 
     for (auto &pair : cachedBitmaps)
@@ -87,8 +88,6 @@ void Text::SetPosition(int offsetX, int offsetY)
 
 void Text::renderBitmap()
 {
-    FT_Error error;
-
     std::vector<Text::TextData> textArray;
     int maxAscender = 0;
     int maxDescender = 0;
@@ -108,9 +107,9 @@ void Text::renderBitmap()
             continue;
         }
 
-        error = FT_Load_Char(face, t, FT_LOAD_RENDER);
-        if (error)
+        if (FT_Load_Char(face, t, FT_LOAD_RENDER))
             std::cout << "load char faild" << std::endl;
+
         maxAscender = std::max(maxAscender, face->glyph->bitmap_top);
         int descender = face->glyph->bitmap.rows - face->glyph->bitmap_top;
         maxDescender = std::max(maxDescender, std::abs(descender));
@@ -154,16 +153,22 @@ void Text::renderBitmap()
         }
     }
 
-    this->textData = new TextData{{static_cast<unsigned int>(penX), maxHeight, static_cast<int>(penX), 0, 0, 0, bitmap}, static_cast<int>(penX)};
+    if (textBitmap)
+    {
+        delete[] textBitmap->mem;
+        delete textBitmap;
+    }
+
+    textBitmap = new Bitmap{static_cast<unsigned int>(penX), maxHeight, static_cast<int>(penX), 0, 0, 0, bitmap};
 }
 
 void Text::Draw2Canvas(uint8_t *YPlane, unsigned int width, unsigned int height)
 {
     renderBitmap();
 
-    unsigned int textWidth = this->textData->bitmap.width;
-    unsigned int textHeight = this->textData->bitmap.rows;
-    uint8_t *textBitmap = this->textData->bitmap.mem;
+    unsigned int textWidth = textBitmap->width;
+    unsigned int textHeight = textBitmap->rows;
+    uint8_t *mem = textBitmap->mem;
 
     uint8_t threshold = 128;
 
@@ -174,7 +179,7 @@ void Text::Draw2Canvas(uint8_t *YPlane, unsigned int width, unsigned int height)
             if (y + this->offsetY >= height || x + this->offsetX >= width)
                 continue;
 
-            uint8_t pixelValue = textBitmap[y * textWidth + x];
+            uint8_t pixelValue = mem[y * textWidth + x];
 
             if (pixelValue > threshold)
             {
