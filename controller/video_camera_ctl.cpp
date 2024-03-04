@@ -5,7 +5,7 @@ VideoCameraCtl::VideoCameraCtl(OutputManager &output_manager) : output_manager_(
     std::cout << "VideoCameraCtl constructor" << std::endl;
     timestamp_.SetFontPath("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf");
     timestamp_.SetFontSize(24);
-    // timestamp.SetPosition(10, 10);
+    timestamp_.SetPosition(15, 15);
     enable_timestamp_ = true;
 }
 

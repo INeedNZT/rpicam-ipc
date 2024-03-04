@@ -12,15 +12,17 @@ public:
     void SetFontPath(const char *fontPath);
     void SetFontSize(int fontSize);
     void SetText(const char *text);
-    void SetPosition(int x, int y);
+    void SetPosition(int offsetX, int offsetY);
     void Draw2Canvas(uint8_t *YPlane, unsigned int width, unsigned int height);
     struct Bitmap
     {
         unsigned int width;
         unsigned int rows;
         int pitch;
+        signed int left;
+        signed int top;
         signed long advanceX;
-        uint8_t *bitmap;
+        uint8_t *mem;
     };
     struct TextData
     {
@@ -39,8 +41,8 @@ private:
     char *fontPath;
     int fontSize;
     char *text;
-    int x;
-    int y;
+    int offsetX;
+    int offsetY;
 
     void renderBitmap();
 };
