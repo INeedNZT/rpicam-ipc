@@ -97,5 +97,6 @@ void VideoCameraCtl::addTimestampText(CompletedRequestPtr &completed_request)
     BufferWriteSync r(&vcamera_, buffer);
     libcamera::Span span = r.Get()[0];
     void *mem = span.data();
+    // FIXME: hardcode 1920x1080, change it later
     timestamp_.Draw2Canvas(reinterpret_cast<uint8_t *>(mem), 1920, 1080);
 }
