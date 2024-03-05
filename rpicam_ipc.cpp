@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
 	MongooseManager mgr;
 
 	VideoCameraCtl vc(om);
-	WebCtl wc(mgr, ".", "ws://localhost:8000");
+	WebCtl wc(mgr, ".", "ws://0.0.0.0:8000");
 
 	om.SetPreviewCallback([&mgr](FrameBufferPtr &fb_ptr)
 						  {
