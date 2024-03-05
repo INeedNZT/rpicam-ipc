@@ -1,7 +1,7 @@
 #include "webu.hpp"
 #include <string>
 
-// Assuming the resoulution is 1920x1080
+// FIXME: Assuming the resoulution is 1920x1080, hard code in this stage
 std::string json = R"({"action": "init", "width": 1920, "height": 1080})";
 
 WebU::WebU()

@@ -35,7 +35,7 @@ public:
 	static unsigned int GetVerbosity() { return verbosity; };
 
     std::string GetCameraModel() const;
-    libcamera::Stream *GetVideoStream(StreamInfo *info = nullptr) const;
+    libcamera::Stream *GetStream(std::string const &name, StreamInfo *info = nullptr) const;
     StreamInfo GetStreamInfo(libcamera::Stream *stream) const;
     
     void OpenCamera();

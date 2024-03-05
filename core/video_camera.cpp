@@ -106,9 +106,9 @@ VideoCamera::~VideoCamera()
 	CloseCamera();
 }
 
-libcamera::Stream *VideoCamera::GetVideoStream(StreamInfo *info) const
+libcamera::Stream *VideoCamera::GetStream(std::string const &name, StreamInfo *info) const
 {
-	auto it = streams_.find("video");
+	auto it = streams_.find(name);
 	if (it == streams_.end())
 		return nullptr;
 	if (info)
@@ -203,6 +203,7 @@ void VideoCamera::ConfigureVideo()
 	LOG(2, "Configuring video...");
 
 	std::vector<libcamera::StreamRole> stream_roles = {libcamera::StreamRole::VideoRecording};
+	stream_roles.push_back(libcamera::StreamRole::Viewfinder);
 	configuration_ = camera_->generateConfiguration(stream_roles);
 	if (!configuration_)
 		throw std::runtime_error("failed to generate video configuration");
@@ -217,11 +218,23 @@ void VideoCamera::ConfigureVideo()
 	else
 		cfg.colorSpace = libcamera::ColorSpace::Smpte170m;
 
+	
+	// FIXME: Hard code at this moment, we can add more options later
+	libcamera::Size lores_size(640, 640);
+	lores_size.alignDownTo(2, 2);
+	if (lores_size.width > configuration_->at(0).size.width ||
+			lores_size.height > configuration_->at(0).size.height)
+			throw std::runtime_error("Low res image larger than video");
+	configuration_->at(1).pixelFormat = libcamera::formats::YUV420;
+	configuration_->at(1).size = lores_size;
+	configuration_->at(1).bufferCount = configuration_->at(0).bufferCount;
+
 	// TODO: Not set Denoise for now
 
 	setupCapture();
 
 	streams_["video"] = configuration_->at(0).stream();
+	streams_["lores"] = configuration_->at(1).stream();
 
 	LOG(2, "Video setup complete");
 }
@@ -320,7 +333,7 @@ void VideoCamera::StartEncoder()
 {
 	StreamInfo info;
 
-	GetVideoStream(&info);
+	GetStream("video", &info);
 	if (!info.width || !info.height || !info.stride)
 		throw std::runtime_error("video steam is not configured");
 	encoder_ = std::unique_ptr<Encoder>(Encoder::Create(info));
@@ -347,7 +360,7 @@ void VideoCamera::StopEncoder()
 void VideoCamera::EncodeBuffer(CompletedRequestPtr &completed_request)
 {
 	assert(encoder_);
-	libcamera::Stream *stream = GetVideoStream();
+	libcamera::Stream *stream = GetStream("video");
 	StreamInfo info = GetStreamInfo(stream);
 	libcamera::FrameBuffer *buffer = completed_request->buffers[stream];
 	BufferReadSync r(this, buffer);

@@ -92,7 +92,7 @@ void VideoCameraCtl::addTimestampText(CompletedRequestPtr &completed_request)
     }
 
     // Add timestamp to the frame before encoding
-    libcamera::Stream *stream = vcamera_.GetVideoStream();
+    libcamera::Stream *stream = vcamera_.GetStream("video");
     libcamera::FrameBuffer *buffer = completed_request->buffers[stream];
     BufferWriteSync r(&vcamera_, buffer);
     libcamera::Span span = r.Get()[0];

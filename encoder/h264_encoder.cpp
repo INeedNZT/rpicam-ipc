@@ -74,6 +74,7 @@ H264Encoder::H264Encoder(StreamInfo const &info)
 
 	fmt = {};
 	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+	// FIXME: Hard code the resolution, change it later
 	fmt.fmt.pix_mp.width = 1920;
 	fmt.fmt.pix_mp.height = 1080;
 	fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_H264;
