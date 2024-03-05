@@ -1,55 +1,81 @@
-<html>
-  <head>
-    <title>h264-live-player web client demo</title>
-  </head>
-  <body>
+<!DOCTYPE html>
+<html lang="en">
 
-    <button type="button" onclick="wsavc.playStream()">Start Video</button>
-    <button type="button" onclick="wsavc.stopStream()">Stop Video</button>
-    <button type="button" onclick="wsavc.disconnect()">Disconnect</button>
-    <br/>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live Stream</title>
 
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="fontawesome.min.css">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="adminlte.min.css">
+  <!-- Custom style -->
+  <link rel="stylesheet" href="main.css">
+  <style>
+    canvas {
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body class="hold-transition dark-mode">
+  <section class="content">
+    <!-- <button type="button" onclick="wsavc.playStream()">Start Video</button>
+      <button type="button" onclick="wsavc.stopStream()">Stop Video</button>
+      <button type="button" onclick="wsavc.disconnect()">Disconnect</button> -->
+  </section>
+
+  <!-- jQuery -->
+  <script src="jquery.min.js"></script>
+  <!-- Bootstrap -->
+  <script src="bootstrap.bundle.min.js"></script>
+  <!-- AdminLTE App -->
+  <script src="adminlte.min.js"></script>
+  <!-- ChartJS -->
+  <script src="Chart.min.js"></script>
+  <!-- Custom JS -->
+  <script src="main.js"></script>
   <!-- provide WSAvcPlayer -->
-    <script type="text/javascript">
+  <script type="text/javascript">
 
-var canvas = document.createElement("canvas");
-document.body.appendChild(canvas);
+    var canvas = document.createElement("canvas");
+    document.body.getElementsByClassName("content")[0].appendChild(canvas);
 
-// Create h264 player
-var uri = "ws://" + document.location.host + "/rpicam";
-const ww = new Worker('http-live-player-worker.js');
-const ofc = canvas.transferControlToOffscreen()
-ww.postMessage({
-  cmd:'init',
-  canvas: ofc
-}, [ofc]);
-ww.postMessage({
-  cmd:'connect',
-  url:uri
-});
-
-//expose instance for button callbacks
-window.wsavc = {
-  playStream(){
+    // Create h264 player
+    var uri = "ws://" + document.location.host + "/rpicam";
+    const ww = new Worker('http-live-player-worker.js');
+    const ofc = canvas.transferControlToOffscreen()
     ww.postMessage({
-      cmd:'play'
-    })
-  },
-  stopStream(){
+      cmd: 'init',
+      canvas: ofc
+    }, [ofc]);
     ww.postMessage({
-      cmd:'stop'
-    })
-  },
-  disconnect(){
-    ww.postMessage({
-      cmd:'disconnect'
-    })
-  }
-};
+      cmd: 'connect',
+      url: uri
+    });
 
-    </script>
-    <p>
-      <a href="/">Back to Navigation Page</a>
-    </p>
-  </body>
+    //expose instance for button callbacks
+    window.wsavc = {
+      playStream() {
+        ww.postMessage({
+          cmd: 'play'
+        })
+      },
+      stopStream() {
+        ww.postMessage({
+          cmd: 'stop'
+        })
+      },
+      disconnect() {
+        ww.postMessage({
+          cmd: 'disconnect'
+        })
+      }
+    };
+
+  </script>
+
+</body>
+
 </html>
